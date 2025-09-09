@@ -1,0 +1,13 @@
+{
+    "train_data_path": "../data/train/train_data.csv",
+    "train_embedding_path": "../data/train/train_residue_esm2.pt",
+    "train_ligand_path": "../data/train/train_ligand.pkl",
+
+    "coach_data_path": "../data/test/COACH420.csv",
+    "coach_embedding_path": "../data/test/COACH420_residue_esm2.pt",
+    "coach_ligand_path": "../data/test/COACH420_ligand.pkl",
+
+    "holo_data_path": "../data/test/HOLO4K.csv",
+    "holo_embedding_path": "../data/test/HOLO4K_residue_esm2.pt",
+    "holo_ligand_path": "../data/test/HOLO4K_ligand.pkl"
+}

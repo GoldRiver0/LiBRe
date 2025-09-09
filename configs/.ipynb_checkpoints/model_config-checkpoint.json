@@ -1,0 +1,7 @@
+{
+    "use_cnn_lstm": true,
+    "use_ligand": true,
+    "residue_input_dim": 640,
+    "lambda_contrastive": 0.5,
+    "use_contrastive": false
+}
