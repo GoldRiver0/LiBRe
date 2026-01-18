@@ -4,3 +4,5 @@
 ## 🖼 Model Architecture
 
 ![LiBRe Model](docs/images/model_architecture.jpg)
+
+## 🧩 Dependencies
