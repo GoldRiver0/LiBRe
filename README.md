@@ -6,3 +6,8 @@
 ![LiBRe Model](docs/images/model_architecture.jpg)
 
 ## 🧩 Dependencies
+- Python >= 3.8
+- PyTorch >= 1.12
+- numpy
+- pandas
+- RDKit
