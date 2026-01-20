@@ -70,6 +70,7 @@ def create_dataloader(sequence, origin_len, label, embeddings, ligand, batch_siz
     dataset = BRPDataset(sequence, origin_len, label, embeddings, ligand)
     return DataLoader(dataset, batch_size=batch_size, collate_fn=partial(collate_fn))
 
+
 # Functions for SMILES to graph conversion
 def one_of_k_encoding(x, allowable_set):
     if x not in allowable_set:
@@ -190,23 +191,31 @@ def collate_fn(batch):
     return embeddings, origin_len, ligands, padded_labels
 
 
-def find_best_threshold(all_preds, all_labels, device, thresholds=np.arange(0.1, 1.0, 0.001)):
-    
+def find_best_threshold_f2(all_preds, all_labels, device, thresholds=np.arange(0.1, 1.0, 0.05), beta=2):
     all_preds = torch.tensor(all_preds, device=device)
     all_labels = torch.tensor(all_labels, device=device).long()
 
     thresholds_tensor = torch.tensor(thresholds, device=device).view(1, -1)
     pred_matrix = (all_preds.view(-1, 1) > thresholds_tensor).long()
 
-   
-    true_positives = ((pred_matrix == 1) & (all_labels.view(-1, 1) == 1)).sum(dim=0)
-    false_negatives = ((pred_matrix == 0) & (all_labels.view(-1, 1) == 1)).sum(dim=0)
+    labels = all_labels.view(-1, 1)
 
-    recalls = true_positives.float() / (true_positives + false_negatives + 1e-8)  # [T]
-    best_idx = torch.argmax(recalls)
+    tp = ((pred_matrix == 1) & (labels == 1)).sum(dim=0).float()
+    fp = ((pred_matrix == 1) & (labels == 0)).sum(dim=0).float()
+    fn = ((pred_matrix == 0) & (labels == 1)).sum(dim=0).float()
+
+    beta2 = beta ** 2
+
+    f2_scores = (1 + beta2) * tp / (
+        (1 + beta2) * tp + beta2 * fn + fp + 1e-8
+    )
+
+    best_idx = torch.argmax(f2_scores)
     best_threshold = thresholds[best_idx.item()]
+    best_f2 = f2_scores[best_idx].item()
 
-    return best_threshold
+    return best_threshold, best_f2
+
 
 def nt_xent_loss(embeddings, labels, temperature=1.0):
     """
