@@ -28,3 +28,17 @@ pretrained ESM model.
 python data/esm_residue_embedding.py \
   --csv_path ./data/train/train_example.csv
 
+This command generates a residue-level protein embedding file (`.pt`) in the same directory as the input CSV file.
+
+---
+
+### Step 2. Generate Ligand Features from SMILES
+
+Ligand graph features are generated from SMILES strings using RDKit and converted
+into PyTorch Geometric graph representations.
+
+```bash
+python data/ligand_featurizer.py \
+  --csv_path ./data/train/train_example.csv
+
+This command generates a ligand feature file (_ligand.pkl) in the same directory as the input CSV file.
