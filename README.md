@@ -14,8 +14,7 @@
 
 ## 🚀 How to Use LiBRe
 
-LiBRe requires protein residue embeddings and ligand features as inputs.
-\Follow the steps below to prepare the required files and run the model.
+LiBRe requires protein residue embeddings and ligand features as inputs.  Follow the steps below to prepare the required files and run the model.
 
 ---
 
