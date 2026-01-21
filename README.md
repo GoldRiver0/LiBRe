@@ -23,7 +23,7 @@ LiBRe requires protein residue embeddings and ligand features as inputs.  Follow
 Protein residue-level embeddings are generated from protein sequences using a pretrained ESM model.
 
 ```bash
-python data/esm_residue_embedding.py \
+python data/residue_embedding.py \
   --csv_path ./data/train/train_example.csv
 ```
 
