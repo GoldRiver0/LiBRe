@@ -39,4 +39,4 @@ python data/ligand_featurizer.py \
   --csv_path ./data/train/train_example.csv
 ```
 
-This command generates a ligand feature file (_ligand.pkl) in the same directory as the input CSV file.
+This command generates a ligand feature file (`_ligand.pkl`) in the same directory as the input CSV file.
