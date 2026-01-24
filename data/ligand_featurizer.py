@@ -87,38 +87,51 @@ def smiles_to_data(smiles):
 if __name__ == "__main__":
 
     import os
+    from tqdm import tqdm
     import torch
     import pickle
     import pandas as pd
+    import argparse
 
-    # CSV 파일 읽기
-    csv_path = './Dataset/Test/filtered_HOLO4K_under1500_over10.csv'  # CSV 파일 경로
+    parser = argparse.ArgumentParser(description="Convert SMILES CSV to PyG dataset")
+
+    parser.add_argument(
+        "--csv_path",
+        type=str,
+        required=True,
+        help="Path to input CSV file (must contain 'Ligand_smiles' column)"
+    )
+
+    args = parser.parse_args()
+
+    csv_path = args.csv_path
+
+    base_dir = os.path.dirname(os.path.abspath(csv_path))
+    csv_stem = os.path.splitext(os.path.basename(csv_path))[0]
+    output_path = os.path.join(base_dir, f"{csv_stem}_ligand.pkl")
+
     df = pd.read_csv(csv_path)
 
-    # Ligand_smiles 열 추출
     if 'Ligand_smiles' not in df.columns:
         raise ValueError("The specified column 'Ligand_smiles' does not exist in the CSV file.")
 
-    smiles_list = df['Ligand_smiles'].dropna().tolist()  # NaN 값 제거 및 리스트로 변환
-
+    smiles_list = df['Ligand_smiles'].dropna().tolist()
     N = len(smiles_list)
     print(f"Total entries: {N}")
 
     dataset = []
 
-    for no, smiles in enumerate(smiles_list):
-        print('/'.join(map(str, [no + 1, N])))
 
-        # smiles_to_data 함수 호출하여 데이터 변환
+    for smiles in tqdm(smiles_list, total=N, desc="Processing"):
         try:
             data_obj = smiles_to_data(smiles)
             dataset.append(data_obj)
         except Exception as e:
-            print(f"Error processing SMILES at index {no}: {smiles}")
+            print(f"\n[ERROR] SMILES: {smiles}")
             print(e)
 
-    # Pickle 파일로 저장
-    output_path = "./Dataset/Test/filtered_HOLO4K_ligand.pkl"
+    os.makedirs(base_dir, exist_ok=True)
+
     with open(output_path, "wb") as f:
         pickle.dump(dataset, f)
 

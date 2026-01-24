@@ -108,11 +108,11 @@ class ResidueEncoder(nn.Module):
         
         return final_residue_embedding
     
-class BRPredictor(nn.Module):
+class LiBRe(nn.Module):
     def __init__(self,  use_cnn_lstm=True, use_ligand=True, 
                         residue_input_dim=1024, ligand_input_dim=40, 
                         ligand_hidden_dim=128, dropout=0.2):
-        super(BRPredictor, self).__init__()
+        super(LiBRe, self).__init__()
         
         
 
