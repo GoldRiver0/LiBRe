@@ -14,11 +14,12 @@
 
 ## 🚀 How to Use LiBRe
 
-LiBRe requires protein residue embeddings and ligand features as inputs.  Follow the steps below to prepare the required files and run the model.
+LiBRe requires protein residue embeddings and ligand features as inputs.  
+Follow the steps below to prepare the required files and run the model.
 
 ---
 
-### Step 1. Generate Protein Residue Embeddings
+### 1. Generate Protein Residue Embeddings
 
 Protein residue-level embeddings are generated from protein sequences using a pretrained ESM model.
 
@@ -29,7 +30,7 @@ python data/residue_embedding.py \
 
 This command generates a residue-level protein embedding file (`.pt`) in the same directory as the input CSV file.
 
-### Step 2. Generate Ligand Features from SMILES
+### 2. Generate Ligand Features from SMILES
 
 Ligand graph features are generated from SMILES strings using RDKit and converted into PyTorch Geometric graph representations.
 
