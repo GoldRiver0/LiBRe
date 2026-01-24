@@ -40,3 +40,18 @@ python data/ligand_featurizer.py \
 ```
 
 This command generates a ligand feature file (`_ligand.pkl`) in the same directory as the input CSV file.
+
+### 3. Train
+
+Train the model using the precomputed residue embeddings (.pt) and ligand features (_ligand.pkl).
+
+```bash
+python3 train.py \
+  --train_csv ./data/train/train_example.csv \
+  --train_emb ./data/train/train_example.pt \
+  --train_ligand ./data/train/train_example_ligand.pkl \
+  --test_csv ./data/test/test_example.csv \
+  --test_emb ./data/test/test_example.pt \
+  --test_ligand ./data/test/test_example_ligand.pkl \
+  --seed 42
+```
