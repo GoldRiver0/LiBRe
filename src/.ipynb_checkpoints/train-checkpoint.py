@@ -1,76 +1,97 @@
-import json
-
 from utils import *
 from models.libre import *
 
 import torch
 import torch.nn as nn
 
-with open('../configs/dataset_config.json', 'r') as f:
-    dataset_config = json.load(f)
+args = parse_args()
 
+set_seed(args.seed)
 
-with open('../configs/model_config.json', 'r') as f:
-    model_config = json.load(f)
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-train_sequence, train_origin_len, train_label, train_embeddings, train_ligand = load_data(
-    dataset_config["train_data_path"], 
-    dataset_config["train_embedding_path"], 
-    dataset_config["train_ligand_path"]
+_, train_sequence, _, _, train_origin_len, train_label, train_embeddings, train_ligand = load_data(
+    args.train_csv,
+    args.train_emb,
+    args.train_ligand,
 )
 
-coach_sequence, coach_origin_len, coach_label, coach_embeddings, coach_ligand = load_data(
-    dataset_config["coach_data_path"], 
-    dataset_config["coach_embedding_path"], 
-    dataset_config["coach_ligand_path"]
+test_sequence = None
+test_origin_len = None
+test_label = None
+test_embeddings = None
+test_ligand = None
+
+if args.test_csv is not None and args.test_emb is not None:
+    _, test_sequence, _, _, test_origin_len, test_label, test_embeddings, test_ligand = load_data(
+        args.test_csv,
+        args.test_emb,
+        args.test_ligand,
+    )
+
+if args.no_ligand:
+    train_ligand = [None] * len(train_ligand)
+    if test_sequence is not None:
+        test_ligand = [None] * len(test_ligand)
+
+train_bs = 32
+eval_bs = 16
+lr = 1e-4
+epochs = 200
+
+train_dataloader = create_dataloader(
+    train_sequence,
+    train_origin_len,
+    train_label,
+    train_embeddings,
+    train_ligand,
+    batch_size=train_bs,
+    shuffle=True,
 )
 
-holo_sequence, holo_origin_len,  holo_label, holo_embeddings, holo_ligand = load_data(
-    dataset_config["holo_data_path"], 
-    dataset_config["holo_embedding_path"], 
-    dataset_config["holo_ligand_path"]
+test_dataloader = None
+if test_sequence is not None:
+    test_dataloader = create_dataloader(
+        test_sequence,
+        test_origin_len,
+        test_label,
+        test_embeddings,
+        test_ligand,
+        batch_size=eval_bs,
+        shuffle=False,
+    )
+
+model = LiBRe(
+    use_cnn_lstm=args.use_cnn_lstm,
+    use_ligand=(not args.no_ligand),
+    residue_input_dim=args.residue_input_dim,
 )
 
-set_seed(42)
+model.to(DEVICE)
 
-train_dataloader = create_dataloader(train_sequence, train_origin_len, train_label, train_embeddings, train_ligand, 32)
-coach_dataloader = create_dataloader(coach_sequence, coach_origin_len, coach_label, coach_embeddings, coach_ligand, 16)
-holo_dataloader = create_dataloader(holo_sequence, holo_origin_len, holo_label, holo_embeddings, holo_ligand, 16)
+num_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+print("Trainable Parameters:", num_trainable_params)
 
-BRP_model = BRPredictor(
-    use_cnn_lstm=model_config["use_cnn_lstm"],
-    use_ligand=model_config["use_ligand"],
-    residue_input_dim=model_config["residue_input_dim"]
-)
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+criterion = nn.BCEWithLogitsLoss(reduction="none")
 
-BRP_model.to(model_device)
+for epoch in range(1, epochs + 1):
+    train(train_dataloader, model, criterion, optimizer,
+          epoch=epoch, epochs=epochs,
+          use_contrastive=args.use_contrastive)
 
-num_trainable_params = sum(p.numel() for p in BRP_model.parameters() if p.requires_grad)
-print(f"Trainable Parameters: {num_trainable_params}")
+    if test_dataloader is not None:
+        acc, prec, rec, spec, mcc, f1 = evaluate(test_dataloader, BRP_model)
 
-optimizer = torch.optim.Adam(BRP_model.parameters(), lr=1e-4)
-criterion = nn.BCEWithLogitsLoss(reduction='none')
+        header = "{:<10}{:<12}{:<12}{:<12}{:<12}{:<12}{:<12}".format(
+            "Split", "Accuracy", "Precision", "Recall", "Spec", "MCC", "F1"
+        )
+        results = "{:<10}{:<12.4f}{:<12.4f}{:<12.4f}{:<12.4f}{:<12.4f}{:<12.4f}".format(
+            "TEST", acc, prec, rec, spec, mcc, f1
+        )
 
-num_epochs = 200
-
-import time
-
-for epoch in range(1, num_epochs + 1):
-
-        print(f"\nEpoch {epoch}/{num_epochs}")
-        
-        train(epoch, train_dataloader, BRP_model, criterion, optimizer, model_device)
-                
-        coach_acc, coach_precision, coach_recall, coach_mcc, coach_f1 = evaluate(coach_dataloader, BRP_model, criterion, model_device)
-        holo_acc, holo_precision, holo_recall, holo_mcc, holo_f1 = evaluate(holo_dataloader, BRP_model, criterion, model_device)
-
-        header = f"{'Phase':<12}{'Accuracy':<12}{'Precision':<12}{'Recall':<12}{'MCC':<12}{'F1 Score':<12}"
-        coach_results = f"{'COACH420':<12}{coach_acc:<12.4f}{coach_precision:<12.4f}{coach_recall:<12.4f}{coach_mcc:<12.4f}{coach_f1:<12.4f}"
-        holo_results = f"{'HOLO4K':<12}{holo_acc:<12.4f}{holo_precision:<12.4f}{holo_recall:<12.4f}{holo_mcc:<12.4f}{holo_f1:<12.4f}"
-
-        print("=" * 60)
+        print("=" * 72)
         print(header)
-        print("=" * 60)
-        print(coach_results)
-        print(holo_results)
-        print("=" * 60)
+        print("=" * 72)
+        print(results)
+        print("=" * 72)

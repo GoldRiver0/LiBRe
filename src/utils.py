@@ -265,7 +265,6 @@ def train(dataloader, model, criterion, optimizer, epoch, epochs, use_contrastiv
         total_loss += loss.item()
         avg_loss = total_loss / step
 
-        # ✅ 한 줄 갱신 (줄 안 쌓임)
         print(
             f"Epoch {epoch}/{epochs} | Step {step}/{n_steps} | "
             f"loss={loss.item():.4f} avg={avg_loss:.4f}",
@@ -273,7 +272,6 @@ def train(dataloader, model, criterion, optimizer, epoch, epochs, use_contrastiv
             flush=True,
         )
 
-    # epoch 끝나면 줄 확정(줄바꿈 한 번)
     print()
     return total_loss / max(n_steps, 1)
 
