@@ -24,7 +24,7 @@ Follow the steps below to prepare the required files and run the model.
 Protein residue-level embeddings are generated from protein sequences using a pretrained ESM model.
 
 ```bash
-python data/residue_embedding.py \
+python3 data/residue_embedding.py \
   --csv_path ./data/train/train_example.csv
 ```
 
@@ -35,7 +35,7 @@ This command generates a residue-level protein embedding file (`.pt`) in the sam
 Ligand graph features are generated from SMILES strings using RDKit and converted into PyTorch Geometric graph representations.
 
 ```bash
-python data/ligand_featurizer.py \
+python3 data/ligand_featurizer.py \
   --csv_path ./data/train/train_example.csv
 ```
 
@@ -54,4 +54,13 @@ python3 train.py \
   --test_emb ./data/test/test_example.pt \
   --test_ligand ./data/test/test_example_ligand.pkl \
   --seed 42
+```
+
+## ▶️ Run LiBRe
+
+Use a trained LiBRe model to predict ligand-binding residues given a protein sequence and a ligand SMILES string.
+
+```bash
+python3 run.py
+
 ```
