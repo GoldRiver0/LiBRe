@@ -53,6 +53,8 @@ python3 train.py \
   --test_csv ./data/test/test_example.csv \
   --test_emb ./data/test/test_example.pt \
   --test_ligand ./data/test/test_example_ligand.pkl \
+  --use_cnn_lstm
+  --use_ligand
   --seed 42
 ```
 
