@@ -1,6 +1,8 @@
 from utils import *
 from models.libre import *
 
+import os
+import copy
 import torch
 import torch.nn as nn
 
@@ -29,23 +31,27 @@ if args.test_csv is not None and args.test_emb is not None:
         args.test_ligand,
     )
 
-if args.no_ligand:
+if not args.use_ligand:
     train_ligand = [None] * len(train_ligand)
     if test_sequence is not None:
         test_ligand = [None] * len(test_ligand)
 
-train_bs = 32
-eval_bs = 16
+train_bs = 16
+eval_bs = 8
+val_ratio = 0.2
 lr = 1e-4
-epochs = 200
+epochs = 100
 
-train_dataloader = create_dataloader(
+train_dataloader, val_dataloader = make_train_val_loaders(
     train_sequence,
     train_origin_len,
     train_label,
     train_embeddings,
     train_ligand,
-    batch_size=train_bs,
+    train_bs=train_bs,
+    eval_bs=eval_bs,
+    val_ratio=val_ratio,
+    seed=args.seed,
     shuffle=True,
 )
 
@@ -63,7 +69,7 @@ if test_sequence is not None:
 
 model = LiBRe(
     use_cnn_lstm=args.use_cnn_lstm,
-    use_ligand=(not args.no_ligand),
+    use_ligand=(args.use_ligand),
     residue_input_dim=args.residue_input_dim,
 )
 
@@ -75,23 +81,67 @@ print("Trainable Parameters:", num_trainable_params)
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 criterion = nn.BCEWithLogitsLoss(reduction="none")
 
+best_path = "checkpoints/best_model.pt"
+os.makedirs(os.path.dirname(best_path), exist_ok=True)
+
+earlystop = 20      
+min_epochs = 20 
+min_delta = 1e-4
+
+best_f2 = float("-inf")
+best_epoch = 0
+patience = 0
+
+print()
+
 for epoch in range(1, epochs + 1):
-    train(train_dataloader, model, criterion, optimizer,
-          epoch=epoch, epochs=epochs,
-          use_contrastive=args.use_contrastive)
+    print_split_line()
+
+    train(
+        train_dataloader, model, criterion, optimizer,
+        epoch=epoch, epochs=epochs,
+        use_contrastive=args.use_contrastive,
+        log_every=10,
+    )
+    print()
+
+    print_eval_header()
+
+    val_m = evaluate(val_dataloader, model, threshold=0.6)
+    print_eval_row("[VAL]", val_m)
 
     if test_dataloader is not None:
-        acc, prec, rec, spec, mcc, f1 = evaluate(test_dataloader, BRP_model)
+        test_m = evaluate(test_dataloader, model, threshold=0.6)
+        print_eval_row("[TEST]", test_m)
 
-        header = "{:<10}{:<12}{:<12}{:<12}{:<12}{:<12}{:<12}".format(
-            "Split", "Accuracy", "Precision", "Recall", "Spec", "MCC", "F1"
-        )
-        results = "{:<10}{:<12.4f}{:<12.4f}{:<12.4f}{:<12.4f}{:<12.4f}{:<12.4f}".format(
-            "TEST", acc, prec, rec, spec, mcc, f1
-        )
+    if epoch < min_epochs:
+        print(f"  skip best/earlystop ({epoch}/{min_epochs})")
+        print_split_line()
+        print()
+        continue
 
-        print("=" * 72)
-        print(header)
-        print("=" * 72)
-        print(results)
-        print("=" * 72)
+    is_best = val_m["F2"] > (best_f2 + min_delta)
+
+    if is_best:
+        best_f2 = val_m["F2"]
+        best_epoch = epoch
+        patience = 0
+        torch.save(model.state_dict(), best_path)
+    else:
+        patience += 1
+
+    print(f"BEST: epoch={best_epoch}, val_f2={best_f2:.4f}")
+    print_split_line()
+    print()
+
+    if patience >= earlystop:
+        print(f"Early stopping triggered. Best VAL F2={best_f2:.4f} @ epoch {best_epoch}.")
+        break
+
+model.load_state_dict(torch.load(best_path, map_location=DEVICE))
+
+if test_dataloader is not None:
+    final_test_m = evaluate(test_dataloader, model, threshold=0.6)
+    print("Final(best) TEST")
+    print_eval_header()
+    print_eval_row("[TEST]", final_test_m)
