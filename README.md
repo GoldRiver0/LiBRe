@@ -61,6 +61,7 @@ python3 train.py \
 ### 4. Evaluation
 
 To evaluate the trained model on a test dataset, you can run the evaluation script with the appropriate input files and options.  
+The trained model is stored in the `models/model.pt` file.  
 An example command is shown below:
 ```bash
 python3 evaluate.py \
@@ -71,7 +72,6 @@ python3 evaluate.py \
   --use_cnn_lstm \
   --use_ligand
 ```
-
 The evaluation results will be printed to the console.
 
 ## ▶️ Run LiBRe
