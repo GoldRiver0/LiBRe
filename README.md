@@ -58,6 +58,22 @@ python3 train.py \
   --seed 42
 ```
 
+### 4. Evaluation
+
+To evaluate the trained model on a test dataset, you can run the evaluation script with the appropriate input files and options.
+An example command is shown below:
+```bash
+python3 evaluate.py \
+  --test_csv ../data/train/train_example.csv \
+  --test_emb ../data/train/train_example_protein_embedding.pt \
+  --test_ligand ../data/train/train_example_ligand.pkl \
+  --model_path ../models/model.pt \
+  --use_cnn_lstm \
+  --use_ligand
+```
+
+The evaluation results will be printed to the console.
+
 ## ▶️ Run LiBRe
 
 Use a trained LiBRe model to predict ligand-binding residues given a protein sequence and a ligand SMILES string.
