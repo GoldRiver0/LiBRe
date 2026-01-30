@@ -9,5 +9,9 @@ __pycache__/
 *.pkl
 !models/model.pt
 
+# allow model files
+!models/
+!models/model.pt
+
 # Jupyter notebook
 .ipynb_checkpoints/
