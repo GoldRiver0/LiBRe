@@ -1,13 +1,13 @@
 import os
 import re
 import sys
-from tqdm import tqdm
 import random
 import pickle
 import argparse
 import numpy as np
 import pandas as pd
 
+from tqdm import tqdm
 from rdkit import Chem
 from functools import partial
 
@@ -153,14 +153,6 @@ def smiles_to_data(smiles):
     edge_index = torch.tensor(np.vstack(edges), dtype=torch.long)
     x = torch.tensor(atom_feat, dtype=torch.float)
     return Data(x=x, edge_index=edge_index)
-
-
-def get_specificity(y_true, y_pred):
-    cm = confusion_matrix(y_true, y_pred)
-    if cm.shape == (2, 2):
-        tn, fp, fn, tp = cm.ravel()
-        return tn / (tn + fp + 1e-8)
-    return 0.0
 
 
 class LiBReDataset(Dataset):
