@@ -65,9 +65,9 @@ The trained model is stored in the `models/model.pt` file.
 An example command is shown below:
 ```bash
 python3 evaluate.py \
-  --test_csv ../data/train/train_example.csv \
-  --test_emb ../data/train/train_example_protein_embedding.pt \
-  --test_ligand ../data/train/train_example_ligand.pkl \
+  --test_csv ../data/test/test_example.csv \
+  --test_emb ../data/test/test_example_protein_embedding.pt \
+  --test_ligand ../data/test/test_example_ligand.pkl \
   --model_path ../models/model.pt \
   --use_cnn_lstm \
   --use_ligand
